@@ -3,99 +3,537 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Manager</title>
+    <title>Sales Manager - Ginesys</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .container { background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); padding: 40px; max-width: 500px; width: 100%; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .login-page { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); padding: 40px; max-width: 500px; width: 100%; }
         h1 { color: #333; margin-bottom: 10px; text-align: center; }
         .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
         .team-list { list-style: none; }
         .team-list li { margin-bottom: 10px; }
-        .team-list button { width: 100%; padding: 15px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; text-align: left; transition: all 0.3s; }
+        .team-list button { width: 100%; padding: 15px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; text-align: left; transition: all 0.3s; font-weight: 500; }
         .team-list button:hover { background: #667eea; color: white; border-color: #667eea; }
-        .dashboard { padding: 20px; background: #f9f9f9; border-radius: 5px; margin-top: 20px; }
-        .dashboard h2 { color: #333; margin-bottom: 15px; }
-        .dashboard p { color: #666; line-height: 1.6; margin-bottom: 10px; }
-        .logout-btn { width: 100%; padding: 10px; background: #ff6b6b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px; margin-top: 30px; }
+        
+        .dashboard { display: none; background: white; min-height: 100vh; }
+        .dashboard.active { display: block; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h2 { font-size: 24px; }
+        .user-info { text-align: right; }
+        .logout-btn { background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
         .logout-btn:hover { background: #ff5252; }
-        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        
+        .nav-tabs { display: flex; background: white; border-bottom: 2px solid #ddd; padding: 0 20px; }
+        .nav-tabs button { background: none; border: none; padding: 15px 20px; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-tabs button.active { color: #667eea; border-bottom-color: #667eea; }
+        .nav-tabs button:hover { color: #667eea; }
+        
+        .content { padding: 30px; max-width: 1000px; margin: 0 auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: Arial; font-size: 14px; }
+        textarea { resize: vertical; min-height: 100px; }
+        .btn-primary { background: #667eea; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; width: 100%; }
+        .btn-primary:hover { background: #5568d3; }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 32px; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; font-size: 14px; }
+        
+        .list-item { background: white; padding: 15px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #667eea; }
+        .list-item h4 { color: #333; margin-bottom: 5px; }
+        .list-item p { color: #666; font-size: 14px; margin-bottom: 5px; }
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-new { background: #d4edda; color: #155724; }
+        .badge-contacted { background: #d1ecf1; color: #0c5460; }
+        .badge-interested { background: #fff3cd; color: #856404; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .nav-tabs { overflow-x: auto; }
+            .stats { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="container" id="app"></div>
+    <div id="login-page" class="login-page">
+        <div class="login-container">
+            <h1>📊 Sales Manager</h1>
+            <div class="subtitle">Ginesys ERP & POS Sales Team</div>
+            <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 14px;">Select your profile:</p>
+            <ul class="team-list" id="userList"></ul>
+            <div class="success">✅ <strong>App is Working!</strong> Click your name to continue.</div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="dashboard">
+        <div class="header">
+            <div>
+                <h2>📊 Sales Manager</h2>
+                <p style="font-size: 12px; opacity: 0.9;">Ginesys ERP & POS</p>
+            </div>
+            <div class="user-info">
+                <p>User: <strong id="currentUserDisplay"></strong></p>
+                <p>Role: <strong id="currentRoleDisplay"></strong></p>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-btn active" onclick="switchTab('dashboard')">📈 Dashboard</button>
+            <button class="nav-btn" onclick="switchTab('activity')">📞 Log Activity</button>
+            <button class="nav-btn" onclick="switchTab('dar')">📝 DAR Report</button>
+            <button class="nav-btn" onclick="switchTab('deals')">🎯 Deals</button>
+            <button class="nav-btn" onclick="switchTab('tasks')">✓ Tasks</button>
+            <button class="nav-btn" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <h2>Welcome, <span id="welcomeName"></span>!</h2>
+                <p style="color: #666; margin-bottom: 20px;">Here's your sales overview</p>
+                
+                <div class="stats" id="stats"></div>
+                
+                <div class="card">
+                    <h3>📊 Today's Summary</h3>
+                    <div id="todayStats" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- Activity Tab -->
+            <div id="activity-tab" class="tab-content">
+                <div class="card">
+                    <h3>📞 Log Activity</h3>
+                    <form onsubmit="addActivity(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Activity Type</label>
+                                <select id="activityType" required>
+                                    <option>Call</option>
+                                    <option>Demo</option>
+                                    <option>Online Meeting</option>
+                                    <option>Onsite Meeting</option>
+                                    <option>Internal Meeting</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Duration (minutes)</label>
+                                <input type="number" id="duration" min="1" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea id="activityNotes" placeholder="What did you discuss?"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Log Activity</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Recent Activities</h3>
+                    <div id="activitiesList"></div>
+                </div>
+            </div>
+
+            <!-- DAR Tab -->
+            <div id="dar-tab" class="tab-content">
+                <div class="card">
+                    <h3>📝 Daily Activity Report (DAR)</h3>
+                    <form onsubmit="submitDAR(event)">
+                        <div class="form-group">
+                            <label>Today's Activity Summary</label>
+                            <textarea id="todayActivity" placeholder="Describe your activities today..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Tomorrow's Plan</label>
+                            <textarea id="tomorrowPlan" placeholder="What are you planning for tomorrow?"></textarea>
+                        </div>
+                        
+                        <h4 style="margin-top: 20px; margin-bottom: 15px;">Activity Metrics</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Calls Made</label>
+                                <input type="number" id="callsMade" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Demos Given</label>
+                                <input type="number" id="demosGiven" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Negotiation Calls</label>
+                                <input type="number" id="negotiationCalls" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Onsite Meetings</label>
+                                <input type="number" id="onsiteMeetings" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Online Meetings</label>
+                                <input type="number" id="onlineMeetings" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Internal Meetings</label>
+                                <input type="number" id="internalMeetings" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Self Leads Generated</label>
+                                <input type="number" id="selfLeads" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Leads Converted</label>
+                                <input type="number" id="leadsConverted" min="0" value="0">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary" style="margin-top: 20px;">Submit DAR</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Previous DAR Reports</h3>
+                    <div id="darList"></div>
+                </div>
+            </div>
+
+            <!-- Deals Tab -->
+            <div id="deals-tab" class="tab-content">
+                <div class="card">
+                    <h3>🎯 Add New Deal</h3>
+                    <form onsubmit="addDeal(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Company Name</label>
+                                <input type="text" id="companyName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Prospect Name</label>
+                                <input type="text" id="prospectName" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="prospectEmail">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="prospectPhone">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Deal Stage</label>
+                                <select id="dealStage" required>
+                                    <option value="lead">Lead</option>
+                                    <option value="opportunity">Opportunity</option>
+                                    <option value="negotiation">Negotiation</option>
+                                    <option value="closed_won">Closed Won</option>
+                                    <option value="closed_lost">Closed Lost</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Deal Value ($)</label>
+                                <input type="number" id="dealValue" min="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Notes</label>
+                            <textarea id="dealNotes"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Add Deal</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Your Deals</h3>
+                    <div id="dealsList"></div>
+                </div>
+            </div>
+
+            <!-- Tasks Tab -->
+            <div id="tasks-tab" class="tab-content">
+                <div class="card">
+                    <h3>✓ Your Tasks</h3>
+                    <div id="tasksList"></div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Tab -->
+            <div id="leaderboard-tab" class="tab-content">
+                <div class="card">
+                    <h3>🏆 Team Leaderboard</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
+                            <th style="padding: 10px; text-align: left;">Rank</th>
+                            <th style="padding: 10px; text-align: left;">Name</th>
+                            <th style="padding: 10px; text-align: center;">Activities</th>
+                            <th style="padding: 10px; text-align: center;">Deals</th>
+                            <th style="padding: 10px; text-align: center;">Won</th>
+                        </tr>
+                        <tbody id="leaderboardBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const users = [
-            'Srinivas',
-            'Kamal alawadhi',
-            'Simmi Khan',
-            'Ajay Singh Chauhan',
-            'Bhargav Oza',
-            'Soubhik Mahata',
-            'Yaqub Shaik',
-            'Maharshi Vastrala',
-            'Nawab Suhail',
-            'Aswanth'
-        ];
-
+        const users = ['Srinivas', 'Kamal alawadhi', 'Simmi Khan', 'Ajay Singh Chauhan', 'Bhargav Oza', 'Soubhik Mahata', 'Yaqub Shaik', 'Maharshi Vastrala', 'Nawab Suhail', 'Aswanth'];
         let currentUser = null;
+        let activities = {};
+        let darReports = {};
+        let deals = {};
 
-        function renderApp() {
-            const app = document.getElementById('app');
-            
-            if (!currentUser) {
-                app.innerHTML = `
-                    <h1>📊 Sales Manager</h1>
-                    <div class="subtitle">Ginesys ERP & POS Sales Team</div>
-                    <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 14px;">Select your profile:</p>
-                    <ul class="team-list">
-                        ${users.map(name => `
-                            <li>
-                                <button onclick="login('${name}')" style="font-weight: 500;">
-                                    ${name}
-                                    <span style="float: right; color: #999;">→</span>
-                                </button>
-                            </li>
-                        `).join('')}
-                    </ul>
-                    <div class="success" style="margin-top: 30px;">
-                        ✅ <strong>App is Working!</strong> Click your name to continue.
-                    </div>
-                `;
-            } else {
-                app.innerHTML = `
-                    <h1>👋 Welcome, ${currentUser}!</h1>
-                    <div class="subtitle">${users[0] === currentUser ? 'Manager Dashboard' : 'Sales Rep Dashboard'}</div>
-                    <div class="success">
-                        ✅ Sales Manager App is LIVE!
-                    </div>
-                    <div class="dashboard">
-                        <h2>📈 Your Dashboard</h2>
-                        <p><strong>User:</strong> ${currentUser}</p>
-                        <p><strong>Role:</strong> ${users[0] === currentUser ? 'Manager' : 'Sales Representative'}</p>
-                        <p style="margin-top: 20px; color: #667eea;">✓ Log activities</p>
-                        <p>✓ Submit DAR reports</p>
-                        <p>✓ Track deals</p>
-                        <p>✓ View tasks</p>
-                        <p>✓ See leaderboard</p>
-                        <button class="logout-btn" onclick="logout()">Logout</button>
-                    </div>
-                `;
+        // Load data from localStorage
+        function loadData() {
+            const stored = localStorage.getItem('salesData');
+            if (stored) {
+                const data = JSON.parse(stored);
+                activities = data.activities || {};
+                darReports = data.darReports || {};
+                deals = data.deals || {};
             }
         }
 
-        function login(name) {
-            currentUser = name;
-            renderApp();
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('salesData', JSON.stringify({ activities, darReports, deals }));
+        }
+
+        // Initialize
+        loadData();
+
+        // Render login page
+        function renderLogin() {
+            const list = document.getElementById('userList');
+            list.innerHTML = users.map(user => `<li><button onclick="login('${user}')" style="font-weight: 500;">${user}<span style="float: right; color: #999;">→</span></button></li>`).join('');
+        }
+
+        function login(user) {
+            currentUser = user;
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('currentUserDisplay').textContent = user;
+            document.getElementById('currentRoleDisplay').textContent = user === 'Srinivas' ? 'Manager' : 'Sales Rep';
+            document.getElementById('welcomeName').textContent = user;
+            updateDashboard();
         }
 
         function logout() {
             currentUser = null;
-            renderApp();
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('dashboard').classList.remove('active');
         }
 
-        renderApp();
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + '-tab').classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'activity') updateActivities();
+            if (tab === 'dar') updateDARList();
+            if (tab === 'deals') updateDealsList();
+            if (tab === 'tasks') updateTasks();
+            if (tab === 'leaderboard') updateLeaderboard();
+        }
+
+        function addActivity(e) {
+            e.preventDefault();
+            if (!activities[currentUser]) activities[currentUser] = [];
+            activities[currentUser].push({
+                type: document.getElementById('activityType').value,
+                duration: document.getElementById('duration').value,
+                notes: document.getElementById('activityNotes').value,
+                date: new Date().toLocaleDateString()
+            });
+            saveData();
+            document.getElementById('activityType').value = 'Call';
+            document.getElementById('duration').value = '';
+            document.getElementById('activityNotes').value = '';
+            updateActivities();
+            updateDashboard();
+            alert('✅ Activity logged successfully!');
+        }
+
+        function updateActivities() {
+            const list = document.getElementById('activitiesList');
+            const userActivities = activities[currentUser] || [];
+            if (userActivities.length === 0) {
+                list.innerHTML = '<p style="color: #999;">No activities logged yet</p>';
+            } else {
+                list.innerHTML = userActivities.map((act, i) => `
+                    <div class="list-item">
+                        <h4>${act.type}</h4>
+                        <p>Duration: ${act.duration} minutes | Date: ${act.date}</p>
+                        <p>${act.notes}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function submitDAR(e) {
+            e.preventDefault();
+            if (!darReports[currentUser]) darReports[currentUser] = [];
+            darReports[currentUser].push({
+                date: new Date().toLocaleDateString(),
+                todayActivity: document.getElementById('todayActivity').value,
+                tomorrowPlan: document.getElementById('tomorrowPlan').value,
+                callsMade: parseInt(document.getElementById('callsMade').value),
+                demosGiven: parseInt(document.getElementById('demosGiven').value),
+                negotiationCalls: parseInt(document.getElementById('negotiationCalls').value),
+                onsiteMeetings: parseInt(document.getElementById('onsiteMeetings').value),
+                onlineMeetings: parseInt(document.getElementById('onlineMeetings').value),
+                internalMeetings: parseInt(document.getElementById('internalMeetings').value),
+                selfLeads: parseInt(document.getElementById('selfLeads').value),
+                leadsConverted: parseInt(document.getElementById('leadsConverted').value)
+            });
+            saveData();
+            document.getElementById('todayActivity').value = '';
+            document.getElementById('tomorrowPlan').value = '';
+            updateDashboard();
+            alert('✅ DAR submitted successfully!');
+        }
+
+        function updateDARList() {
+            const list = document.getElementById('darList');
+            const userDAR = darReports[currentUser] || [];
+            if (userDAR.length === 0) {
+                list.innerHTML = '<p style="color: #999;">No DAR reports submitted yet</p>';
+            } else {
+                list.innerHTML = userDAR.map(dar => `
+                    <div class="list-item">
+                        <h4>DAR - ${dar.date}</h4>
+                        <p><strong>Today:</strong> ${dar.todayActivity}</p>
+                        <p><strong>Tomorrow:</strong> ${dar.tomorrowPlan}</p>
+                        <p>📞 Calls: ${dar.callsMade} | 🎯 Demos: ${dar.demosGiven} | 💼 Meetings: ${dar.onlineMeetings + dar.onsiteMeetings}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addDeal(e) {
+            e.preventDefault();
+            if (!deals[currentUser]) deals[currentUser] = [];
+            deals[currentUser].push({
+                company: document.getElementById('companyName').value,
+                prospect: document.getElementById('prospectName').value,
+                email: document.getElementById('prospectEmail').value,
+                phone: document.getElementById('prospectPhone').value,
+                stage: document.getElementById('dealStage').value,
+                value: document.getElementById('dealValue').value,
+                notes: document.getElementById('dealNotes').value,
+                date: new Date().toLocaleDateString()
+            });
+            saveData();
+            document.getElementById('companyName').value = '';
+            document.getElementById('prospectName').value = '';
+            document.getElementById('prospectEmail').value = '';
+            document.getElementById('prospectPhone').value = '';
+            document.getElementById('dealStage').value = 'lead';
+            document.getElementById('dealValue').value = '';
+            document.getElementById('dealNotes').value = '';
+            updateDealsList();
+            updateDashboard();
+            alert('✅ Deal added successfully!');
+        }
+
+        function updateDealsList() {
+            const list = document.getElementById('dealsList');
+            const userDeals = deals[currentUser] || [];
+            if (userDeals.length === 0) {
+                list.innerHTML = '<p style="color: #999;">No deals added yet</p>';
+            } else {
+                list.innerHTML = userDeals.map(deal => `
+                    <div class="list-item">
+                        <h4>${deal.company}</h4>
+                        <p><span class="badge badge-${deal.stage}">${deal.stage}</span></p>
+                        <p>Prospect: ${deal.prospect} | Value: $${deal.value || '—'}</p>
+                        <p>${deal.notes}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function updateTasks() {
+            const list = document.getElementById('tasksList');
+            if (currentUser === 'Srinivas') {
+                list.innerHTML = '<p>You can assign tasks to your team members (feature in progress)</p>';
+            } else {
+                list.innerHTML = '<p style="color: #999;">No tasks assigned yet</p>';
+            }
+        }
+
+        function updateLeaderboard() {
+            const body = document.getElementById('leaderboardBody');
+            const scores = users.map(user => ({
+                name: user,
+                activities: (activities[user] || []).length,
+                deals: (deals[user] || []).length,
+                won: (deals[user] || []).filter(d => d.stage === 'closed_won').length
+            })).sort((a, b) => (b.won * 10 + b.deals * 5 + b.activities) - (a.won * 10 + a.deals * 5 + a.activities));
+            
+            body.innerHTML = scores.map((score, i) => `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">${i + 1}</td>
+                    <td style="padding: 10px;">${score.name}</td>
+                    <td style="padding: 10px; text-align: center;">${score.activities}</td>
+                    <td style="padding: 10px; text-align: center;">${score.deals}</td>
+                    <td style="padding: 10px; text-align: center; color: #28a745; font-weight: bold;">${score.won}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateDashboard() {
+            const userActs = activities[currentUser] || [];
+            const userDAR = darReports[currentUser] || [];
+            const userDeals = deals[currentUser] || [];
+            const wonDeals = userDeals.filter(d => d.stage === 'closed_won').length;
+            
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${userActs.length}</div>
+                    <div class="stat-label">Total Activities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${userDeals.length}</div>
+                    <div class="stat-label">Total Deals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${wonDeals}</div>
+                    <div class="stat-label">Won Deals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${userDAR.length}</div>
+                    <div class="stat-label">DAR Reports</div>
+                </div>
+            `;
+            
+            const latestDAR = userDAR.length > 0 ? userDAR[userDAR.length - 1] : null;
+            if (latestDAR) {
+                document.getElementById('todayStats').innerHTML = `
+                    <p>📞 Calls: ${latestDAR.callsMade}</p>
+                    <p>🎯 Demos: ${latestDAR.demosGiven}</p>
+                    <p>💼 Meetings: ${latestDAR.onlineMeetings + latestDAR.onsiteMeetings}</p>
+                    <p>✨ Leads Generated: ${latestDAR.selfLeads}</p>
+                    <p>✓ Leads Converted: ${latestDAR.leadsConverted}</p>
+                `;
+            } else {
+                document.getElementById('todayStats').innerHTML = '<p style="color: #999;">No DAR submitted yet</p>';
+            }
+        }
+
+        renderLogin();
     </script>
 </body>
 </html>

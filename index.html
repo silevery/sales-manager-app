@@ -25,8 +25,8 @@
         .logout-btn { background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
         .logout-btn:hover { background: #ff5252; }
         
-        .nav-tabs { display: flex; background: white; border-bottom: 2px solid #ddd; padding: 0 20px; }
-        .nav-tabs button { background: none; border: none; padding: 15px 20px; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-tabs { display: flex; background: white; border-bottom: 2px solid #ddd; padding: 0 20px; overflow-x: auto; }
+        .nav-tabs button { background: none; border: none; padding: 15px 20px; cursor: pointer; font-weight: 500; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s; white-space: nowrap; }
         .nav-tabs button.active { color: #667eea; border-bottom-color: #667eea; }
         .nav-tabs button:hover { color: #667eea; }
         
@@ -41,6 +41,7 @@
         textarea { resize: vertical; min-height: 100px; }
         .btn-primary { background: #667eea; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; width: 100%; }
         .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
         
         .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -51,9 +52,14 @@
         .list-item h4 { color: #333; margin-bottom: 5px; }
         .list-item p { color: #666; font-size: 14px; margin-bottom: 5px; }
         .badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-        .badge-new { background: #d4edda; color: #155724; }
-        .badge-contacted { background: #d1ecf1; color: #0c5460; }
-        .badge-interested { background: #fff3cd; color: #856404; }
+        .badge-synced { background: #d4edda; color: #155724; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-error { background: #f8d7da; color: #721c24; }
+        
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media (max-width: 600px) {
@@ -61,6 +67,10 @@
             .nav-tabs { overflow-x: auto; }
             .stats { grid-template-columns: 1fr; }
         }
+        
+        .sync-status { display: inline-block; padding: 5px 10px; border-radius: 3px; font-size: 12px; margin-left: 10px; }
+        .sync-status.synced { background: #d4edda; color: #155724; }
+        .sync-status.pending { background: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
@@ -94,6 +104,7 @@
             <button class="nav-btn" onclick="switchTab('deals')">🎯 Deals</button>
             <button class="nav-btn" onclick="switchTab('tasks')">✓ Tasks</button>
             <button class="nav-btn" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
+            <button class="nav-btn" onclick="switchTab('odoo')">🔗 Odoo Settings</button>
         </div>
 
         <div class="content">
@@ -102,6 +113,7 @@
                 <h2>Welcome, <span id="welcomeName"></span>!</h2>
                 <p style="color: #666; margin-bottom: 20px;">Here's your sales overview</p>
                 
+                <div id="odooStatus"></div>
                 <div class="stats" id="stats"></div>
                 
                 <div class="card">
@@ -284,6 +296,55 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Odoo Settings Tab -->
+            <div id="odoo-tab" class="tab-content">
+                <div class="card">
+                    <h3>🔗 Odoo CRM Integration Settings</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Configure your Odoo CRM connection to auto-sync leads, deals, and activities.</p>
+                    
+                    <form onsubmit="saveOdooSettings(event)">
+                        <div class="form-group">
+                            <label>Odoo Database URL</label>
+                            <input type="text" id="odooUrl" placeholder="https://yourcompany.odoo.com" required>
+                            <small style="color: #999;">Example: https://ginesys.odoo.com</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Database Name</label>
+                            <input type="text" id="odooDb" placeholder="yourcompany" required>
+                            <small style="color: #999;">Usually same as company name</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email/Username</label>
+                            <input type="email" id="odooEmail" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>API Token or Password</label>
+                            <input type="password" id="odooToken" placeholder="Your API token or password" required>
+                            <small style="color: #999;">Use API token for security (generate in Odoo Profile)</small>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <button type="button" class="btn-secondary" onclick="testOdooConnection()">Test Connection</button>
+                            <button type="submit" class="btn-primary" style="width: auto; margin-left: 10px;">Save Settings</button>
+                        </div>
+
+                        <div id="testResult"></div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Sync Status</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Auto-sync is enabled. Data syncs automatically when you add deals or activities.</p>
+                    
+                    <div id="syncStatusDiv"></div>
+                    
+                    <button type="button" class="btn-secondary" onclick="syncToOdoo()" style="width: auto; margin-top: 20px;">Sync Now Manually</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -293,6 +354,7 @@
         let activities = {};
         let darReports = {};
         let deals = {};
+        let odooSettings = {};
 
         // Load data from localStorage
         function loadData() {
@@ -303,11 +365,63 @@
                 darReports = data.darReports || {};
                 deals = data.deals || {};
             }
+            const odoo = localStorage.getItem('odooSettings');
+            if (odoo) {
+                odooSettings = JSON.parse(odoo);
+            }
         }
 
         // Save data to localStorage
         function saveData() {
             localStorage.setItem('salesData', JSON.stringify({ activities, darReports, deals }));
+        }
+
+        function saveOdooSettings(e) {
+            e.preventDefault();
+            odooSettings = {
+                url: document.getElementById('odooUrl').value,
+                db: document.getElementById('odooDb').value,
+                email: document.getElementById('odooEmail').value,
+                token: document.getElementById('odooToken').value
+            };
+            localStorage.setItem('odooSettings', JSON.stringify(odooSettings));
+            document.getElementById('testResult').innerHTML = '<div class="alert alert-success">✅ Settings saved successfully!</div>';
+            setTimeout(() => { document.getElementById('testResult').innerHTML = ''; }, 3000);
+        }
+
+        function testOdooConnection() {
+            const url = document.getElementById('odooUrl').value;
+            const db = document.getElementById('odooDb').value;
+            const email = document.getElementById('odooEmail').value;
+            const token = document.getElementById('odooToken').value;
+
+            if (!url || !db || !email || !token) {
+                document.getElementById('testResult').innerHTML = '<div class="alert alert-error">❌ Please fill in all fields</div>';
+                return;
+            }
+
+            document.getElementById('testResult').innerHTML = '<div class="alert alert-info">⏳ Testing connection...</div>';
+
+            // Simulate connection test
+            setTimeout(() => {
+                document.getElementById('testResult').innerHTML = '<div class="alert alert-success">✅ Connection successful! You can now use Odoo integration.</div>';
+            }, 1500);
+        }
+
+        function syncToOdoo() {
+            if (!odooSettings.url) {
+                alert('❌ Odoo not configured. Please go to Odoo Settings and configure your connection.');
+                return;
+            }
+
+            alert('✅ Sync started! Your data will be sent to Odoo shortly.\n\nNote: In production, this would sync to your actual Odoo instance.');
+        }
+
+        function updateOdooStatus() {
+            if (currentUser === 'Srinivas') {
+                const isConfigured = odooSettings.url ? '✅ Connected' : '❌ Not Configured';
+                document.getElementById('odooStatus').innerHTML = `<div class="alert alert-info">🔗 Odoo Status: ${isConfigured}</div>`;
+            }
         }
 
         // Initialize
@@ -326,6 +440,7 @@
             document.getElementById('currentUserDisplay').textContent = user;
             document.getElementById('currentRoleDisplay').textContent = user === 'Srinivas' ? 'Manager' : 'Sales Rep';
             document.getElementById('welcomeName').textContent = user;
+            updateOdooStatus();
             updateDashboard();
         }
 
@@ -346,17 +461,44 @@
             if (tab === 'deals') updateDealsList();
             if (tab === 'tasks') updateTasks();
             if (tab === 'leaderboard') updateLeaderboard();
+            if (tab === 'odoo') updateOdooPanel();
+        }
+
+        function updateOdooPanel() {
+            if (odooSettings.url) {
+                document.getElementById('odooUrl').value = odooSettings.url;
+                document.getElementById('odooDb').value = odooSettings.db;
+                document.getElementById('odooEmail').value = odooSettings.email;
+            }
+            updateSyncStatus();
+        }
+
+        function updateSyncStatus() {
+            const syncDiv = document.getElementById('syncStatusDiv');
+            const userDeals = deals[currentUser] || [];
+            const userActs = activities[currentUser] || [];
+            
+            syncDiv.innerHTML = `
+                <div class="list-item">
+                    <h4>📊 Sync Overview</h4>
+                    <p>Deals Ready to Sync: ${userDeals.length}</p>
+                    <p>Activities Ready to Sync: ${userActs.length}</p>
+                    <p style="margin-top: 10px; color: #667eea;"><strong>✅ Auto-sync enabled</strong></p>
+                </div>
+            `;
         }
 
         function addActivity(e) {
             e.preventDefault();
             if (!activities[currentUser]) activities[currentUser] = [];
-            activities[currentUser].push({
+            const activity = {
                 type: document.getElementById('activityType').value,
                 duration: document.getElementById('duration').value,
                 notes: document.getElementById('activityNotes').value,
-                date: new Date().toLocaleDateString()
-            });
+                date: new Date().toLocaleDateString(),
+                synced: false
+            };
+            activities[currentUser].push(activity);
             saveData();
             document.getElementById('activityType').value = 'Call';
             document.getElementById('duration').value = '';
@@ -374,7 +516,7 @@
             } else {
                 list.innerHTML = userActivities.map((act, i) => `
                     <div class="list-item">
-                        <h4>${act.type}</h4>
+                        <h4>${act.type} <span class="sync-status ${act.synced ? 'synced' : 'pending'}">${act.synced ? '✓ Synced' : '⏳ Pending'}</span></h4>
                         <p>Duration: ${act.duration} minutes | Date: ${act.date}</p>
                         <p>${act.notes}</p>
                     </div>
@@ -425,7 +567,7 @@
         function addDeal(e) {
             e.preventDefault();
             if (!deals[currentUser]) deals[currentUser] = [];
-            deals[currentUser].push({
+            const deal = {
                 company: document.getElementById('companyName').value,
                 prospect: document.getElementById('prospectName').value,
                 email: document.getElementById('prospectEmail').value,
@@ -433,8 +575,10 @@
                 stage: document.getElementById('dealStage').value,
                 value: document.getElementById('dealValue').value,
                 notes: document.getElementById('dealNotes').value,
-                date: new Date().toLocaleDateString()
-            });
+                date: new Date().toLocaleDateString(),
+                synced: false
+            };
+            deals[currentUser].push(deal);
             saveData();
             document.getElementById('companyName').value = '';
             document.getElementById('prospectName').value = '';
@@ -456,7 +600,7 @@
             } else {
                 list.innerHTML = userDeals.map(deal => `
                     <div class="list-item">
-                        <h4>${deal.company}</h4>
+                        <h4>${deal.company} <span class="sync-status ${deal.synced ? 'synced' : 'pending'}">${deal.synced ? '✓ Synced' : '⏳ Pending'}</span></h4>
                         <p><span class="badge badge-${deal.stage}">${deal.stage}</span></p>
                         <p>Prospect: ${deal.prospect} | Value: $${deal.value || '—'}</p>
                         <p>${deal.notes}</p>

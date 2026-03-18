@@ -527,6 +527,22 @@
             displayOppList();
         }
 
+        function clearTodayForm() {
+            document.getElementById('totalCalls').value = '0';
+            document.getElementById('totalOnlineDemos').value = '0';
+            document.getElementById('totalOnsiteDemos').value = '0';
+            document.getElementById('totalLeadsGen').value = '0';
+            document.getElementById('totalOppConverted').value = '0';
+            document.getElementById('dealsMarketing').value = '0';
+            document.getElementById('followUpPipeline').value = '0';
+            document.getElementById('followUpLeads').value = '0';
+            document.getElementById('internalMeetings').value = '0';
+            document.getElementById('onlineDealInput').value = '';
+            document.getElementById('onsiteDealInput').value = '';
+            document.getElementById('leadInput').value = '';
+            document.getElementById('oppInput').value = '';
+        }
+
         function saveTodayActivities(e) {
             e.preventDefault();
             if (!dailyActivities[currentUser]) dailyActivities[currentUser] = {};
@@ -541,11 +557,16 @@
                 followUpPipeline: parseInt(document.getElementById('followUpPipeline').value),
                 followUpLeads: parseInt(document.getElementById('followUpLeads').value),
                 internalMeetings: parseInt(document.getElementById('internalMeetings').value),
+                onlineDealsList: deals.onlineDemos[currentUser] || [],
+                onsiteDealsList: deals.onsiteDemos[currentUser] || [],
+                leadsList: deals.leadsGen[currentUser] || [],
+                oppList: deals.oppConverted[currentUser] || [],
                 timestamp: new Date().toLocaleTimeString()
             };
 
             saveData();
             alert('✅ Today\'s activities saved successfully!');
+            clearTodayForm();
         }
 
         function loadTodayActivities() {
@@ -561,6 +582,8 @@
                 document.getElementById('followUpPipeline').value = data.followUpPipeline;
                 document.getElementById('followUpLeads').value = data.followUpLeads;
                 document.getElementById('internalMeetings').value = data.internalMeetings;
+            } else {
+                clearTodayForm();
             }
             displayOnlineDealList();
             displayOnsiteDealList();
@@ -582,6 +605,10 @@
 
             saveData();
             alert('✅ Tomorrow\'s plan saved successfully!');
+            document.getElementById('plannedInternal').value = '';
+            document.getElementById('plannedDemos').value = '';
+            document.getElementById('plannedNegotiations').value = '';
+            document.getElementById('marketVisits').value = '';
         }
 
         function loadTomorrowPlan() {
@@ -592,6 +619,11 @@
                 document.getElementById('plannedDemos').value = data.plannedDemos;
                 document.getElementById('plannedNegotiations').value = data.plannedNegotiations;
                 document.getElementById('marketVisits').value = data.marketVisits;
+            } else {
+                document.getElementById('plannedInternal').value = '';
+                document.getElementById('plannedDemos').value = '';
+                document.getElementById('plannedNegotiations').value = '';
+                document.getElementById('marketVisits').value = '';
             }
         }
 
@@ -601,6 +633,7 @@
 
             if (!data) {
                 document.getElementById('summaryContent').innerHTML = '<p style="color: #999;">No activities logged for today yet.</p>';
+                document.getElementById('summaryStats').innerHTML = '';
                 return;
             }
 
@@ -649,30 +682,30 @@
             // Create detailed content
             let html = '<div style="margin-top: 20px;">';
             
-            if ((deals.onlineDemos[currentUser] || []).length > 0) {
+            if ((data.onlineDealsList || []).length > 0) {
                 html += '<h4 style="color: #667eea; margin-top: 15px;">💻 Online Demos/Meetings:</h4>';
-                deals.onlineDemos[currentUser].forEach(deal => {
+                data.onlineDealsList.forEach(deal => {
                     html += `<p style="margin-left: 20px;">✓ ${deal}</p>`;
                 });
             }
 
-            if ((deals.onsiteDemos[currentUser] || []).length > 0) {
+            if ((data.onsiteDealsList || []).length > 0) {
                 html += '<h4 style="color: #667eea; margin-top: 15px;">🏢 Onsite Demos/Meetings:</h4>';
-                deals.onsiteDemos[currentUser].forEach(deal => {
+                data.onsiteDealsList.forEach(deal => {
                     html += `<p style="margin-left: 20px;">✓ ${deal}</p>`;
                 });
             }
 
-            if ((deals.leadsGen[currentUser] || []).length > 0) {
+            if ((data.leadsList || []).length > 0) {
                 html += '<h4 style="color: #667eea; margin-top: 15px;">🎯 Leads Generated:</h4>';
-                deals.leadsGen[currentUser].forEach(deal => {
+                data.leadsList.forEach(deal => {
                     html += `<p style="margin-left: 20px;">✓ ${deal}</p>`;
                 });
             }
 
-            if ((deals.oppConverted[currentUser] || []).length > 0) {
+            if ((data.oppList || []).length > 0) {
                 html += '<h4 style="color: #667eea; margin-top: 15px;">✅ Opportunities Converted:</h4>';
-                deals.oppConverted[currentUser].forEach(deal => {
+                data.oppList.forEach(deal => {
                     html += `<p style="margin-left: 20px;">✓ ${deal}</p>`;
                 });
             }
@@ -694,24 +727,58 @@
                 return;
             }
 
-            let csv = 'Daily Sales Report,' + today + '\n';
-            csv += 'Rep Name,' + currentUser + '\n\n';
-            csv += 'Activity,Count\n';
+            let csv = 'DAILY SALES REPORT\n';
+            csv += 'Date,' + today + '\n';
+            csv += 'Rep Name,' + currentUser + '\n';
+            csv += 'Time Logged,' + data.timestamp + '\n\n';
+            
+            csv += '=== ACTIVITIES COUNT ===\n';
+            csv += 'Activity Type,Count\n';
             csv += 'Total Calls Made,' + data.totalCalls + '\n';
             csv += 'Online Demos/Meetings,' + data.totalOnlineDemos + '\n';
             csv += 'Onsite Demos/Meetings,' + data.totalOnsiteDemos + '\n';
             csv += 'Leads Generated,' + data.totalLeadsGen + '\n';
             csv += 'Opportunities Converted,' + data.totalOppConverted + '\n';
-            csv += 'Marketing Deals,' + data.dealsMarketing + '\n';
-            csv += 'Pipeline Follow-ups,' + data.followUpPipeline + '\n';
-            csv += 'Lead Follow-ups,' + data.followUpLeads + '\n';
-            csv += 'Internal Meetings,' + data.internalMeetings + '\n';
+            csv += 'Marketing Deals Assigned,' + data.dealsMarketing + '\n';
+            csv += 'Pipeline Follow-up Calls,' + data.followUpPipeline + '\n';
+            csv += 'Lead Follow-up Calls,' + data.followUpLeads + '\n';
+            csv += 'Internal Meetings,' + data.internalMeetings + '\n\n';
+            
+            csv += '=== DETAILED INFORMATION ===\n';
+            
+            if ((data.onlineDealsList || []).length > 0) {
+                csv += '\nOnline Demos/Meetings\n';
+                data.onlineDealsList.forEach(deal => {
+                    csv += deal + '\n';
+                });
+            }
+
+            if ((data.onsiteDealsList || []).length > 0) {
+                csv += '\nOnsite Demos/Meetings\n';
+                data.onsiteDealsList.forEach(deal => {
+                    csv += deal + '\n';
+                });
+            }
+
+            if ((data.leadsList || []).length > 0) {
+                csv += '\nLeads Generated\n';
+                data.leadsList.forEach(deal => {
+                    csv += deal + '\n';
+                });
+            }
+
+            if ((data.oppList || []).length > 0) {
+                csv += '\nOpportunities Converted\n';
+                data.oppList.forEach(deal => {
+                    csv += deal + '\n';
+                });
+            }
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'daily_report_' + today + '.csv';
+            a.download = 'daily_report_' + today.replace(/\//g, '-') + '.csv';
             a.click();
         }
 

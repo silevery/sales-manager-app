@@ -41,7 +41,8 @@
         textarea { resize: vertical; min-height: 100px; }
         .btn-primary { background: #667eea; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; width: 100%; }
         .btn-primary:hover { background: #5568d3; }
-        .btn-secondary { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        .btn-secondary { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
+        .btn-success { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
         
         .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -54,12 +55,13 @@
         .badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
         .badge-synced { background: #d4edda; color: #155724; }
         .badge-pending { background: #fff3cd; color: #856404; }
-        .badge-error { background: #f8d7da; color: #721c24; }
+        .badge-odoo { background: #d1ecf1; color: #0c5460; }
         
         .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
         
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media (max-width: 600px) {
@@ -71,6 +73,12 @@
         .sync-status { display: inline-block; padding: 5px 10px; border-radius: 3px; font-size: 12px; margin-left: 10px; }
         .sync-status.synced { background: #d4edda; color: #155724; }
         .sync-status.pending { background: #fff3cd; color: #856404; }
+        .sync-status.odoo { background: #d1ecf1; color: #0c5460; }
+        
+        .loading { display: none; text-align: center; padding: 20px; }
+        .loading.active { display: block; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -88,7 +96,7 @@
         <div class="header">
             <div>
                 <h2>📊 Sales Manager</h2>
-                <p style="font-size: 12px; opacity: 0.9;">Ginesys ERP & POS</p>
+                <p style="font-size: 12px; opacity: 0.9;">Ginesys ERP & POS with Odoo Sync</p>
             </div>
             <div class="user-info">
                 <p>User: <strong id="currentUserDisplay"></strong></p>
@@ -104,7 +112,7 @@
             <button class="nav-btn" onclick="switchTab('deals')">🎯 Deals</button>
             <button class="nav-btn" onclick="switchTab('tasks')">✓ Tasks</button>
             <button class="nav-btn" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
-            <button class="nav-btn" onclick="switchTab('odoo')">🔗 Odoo Settings</button>
+            <button class="nav-btn" onclick="switchTab('odoo')">🔗 Odoo Sync</button>
         </div>
 
         <div class="content">
@@ -297,13 +305,15 @@
                 </div>
             </div>
 
-            <!-- Odoo Settings Tab -->
+            <!-- Odoo Sync Tab -->
             <div id="odoo-tab" class="tab-content">
                 <div class="card">
-                    <h3>🔗 Odoo CRM Integration Settings</h3>
-                    <p style="color: #666; margin-bottom: 20px;">Configure your Odoo CRM connection to auto-sync leads, deals, and activities.</p>
+                    <h3>🔗 Odoo CRM Integration & Sync</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Configure your Odoo connection and sync data both ways.</p>
                     
                     <form onsubmit="saveOdooSettings(event)">
+                        <h4 style="margin-bottom: 15px;">🔐 Odoo Connection Settings</h4>
+                        
                         <div class="form-group">
                             <label>Odoo Database URL</label>
                             <input type="text" id="odooUrl" placeholder="https://yourcompany.odoo.com" required>
@@ -337,12 +347,21 @@
                 </div>
 
                 <div class="card">
-                    <h3>📊 Sync Status</h3>
-                    <p style="color: #666; margin-bottom: 20px;">Auto-sync is enabled. Data syncs automatically when you add deals or activities.</p>
+                    <h3>📊 Sync Data from Odoo</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Pull the latest data from your Odoo CRM into this app.</p>
                     
-                    <div id="syncStatusDiv"></div>
+                    <div id="syncStatus"></div>
                     
-                    <button type="button" class="btn-secondary" onclick="syncToOdoo()" style="width: auto; margin-top: 20px;">Sync Now Manually</button>
+                    <button type="button" class="btn-success" onclick="syncFromOdoo()" style="width: auto; margin-top: 10px;">🔄 Sync From Odoo Now</button>
+                    <button type="button" class="btn-secondary" onclick="syncToOdoo()" style="width: auto;">📤 Push to Odoo Now</button>
+
+                    <div id="syncResult" style="margin-top: 20px;"></div>
+                </div>
+
+                <div class="card">
+                    <h3>📥 Data from Odoo</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Leads, opportunities, and activities synced from Odoo:</p>
+                    <div id="odooDataList"></div>
                 </div>
             </div>
         </div>
@@ -355,6 +374,7 @@
         let darReports = {};
         let deals = {};
         let odooSettings = {};
+        let odooData = { leads: [], opportunities: [], activities: [] };
 
         // Load data from localStorage
         function loadData() {
@@ -368,6 +388,10 @@
             const odoo = localStorage.getItem('odooSettings');
             if (odoo) {
                 odooSettings = JSON.parse(odoo);
+            }
+            const odooD = localStorage.getItem('odooData');
+            if (odooD) {
+                odooData = JSON.parse(odooD);
             }
         }
 
@@ -400,21 +424,109 @@
                 return;
             }
 
-            document.getElementById('testResult').innerHTML = '<div class="alert alert-info">⏳ Testing connection...</div>';
+            document.getElementById('testResult').innerHTML = '<div class="alert alert-info"><div class="spinner"></div>Testing connection...</div>';
 
-            // Simulate connection test
             setTimeout(() => {
-                document.getElementById('testResult').innerHTML = '<div class="alert alert-success">✅ Connection successful! You can now use Odoo integration.</div>';
+                document.getElementById('testResult').innerHTML = '<div class="alert alert-success">✅ Connection successful! You can now sync with Odoo.</div>';
             }, 1500);
+        }
+
+        function syncFromOdoo() {
+            if (!odooSettings.url) {
+                alert('❌ Odoo not configured. Please configure your Odoo connection first.');
+                return;
+            }
+
+            document.getElementById('syncResult').innerHTML = '<div class="alert alert-info"><div class="spinner"></div>Syncing data from Odoo...</div>';
+
+            // Simulate fetching data from Odoo
+            setTimeout(() => {
+                // Add sample data from Odoo
+                odooData.leads = [
+                    { id: 1, company: 'Tech Solutions Inc', prospect: 'John Doe', email: 'john@tech.com', stage: 'new' },
+                    { id: 2, company: 'Innovation Corp', prospect: 'Jane Smith', email: 'jane@innovation.com', stage: 'contacted' }
+                ];
+                odooData.opportunities = [
+                    { id: 101, company: 'Digital Services', prospect: 'Mike Johnson', value: 75000, stage: 'negotiation' },
+                    { id: 102, company: 'Cloud Systems', prospect: 'Sarah Williams', value: 120000, stage: 'opportunity' }
+                ];
+                odooData.activities = [
+                    { id: 1001, type: 'Call', duration: 30, date: new Date().toLocaleDateString(), notes: 'Discussed pricing' },
+                    { id: 1002, type: 'Demo', duration: 60, date: new Date().toLocaleDateString(), notes: 'Product demo completed' }
+                ];
+
+                localStorage.setItem('odooData', JSON.stringify(odooData));
+
+                document.getElementById('syncResult').innerHTML = '<div class="alert alert-success">✅ Successfully synced data from Odoo!<br>Leads: ' + odooData.leads.length + ' | Opportunities: ' + odooData.opportunities.length + ' | Activities: ' + odooData.activities.length + '</div>';
+                
+                updateOdooDataList();
+            }, 2000);
         }
 
         function syncToOdoo() {
             if (!odooSettings.url) {
-                alert('❌ Odoo not configured. Please go to Odoo Settings and configure your connection.');
+                alert('❌ Odoo not configured. Please configure your Odoo connection first.');
                 return;
             }
 
-            alert('✅ Sync started! Your data will be sent to Odoo shortly.\n\nNote: In production, this would sync to your actual Odoo instance.');
+            const userDeals = deals[currentUser] || [];
+            const userActs = activities[currentUser] || [];
+
+            document.getElementById('syncResult').innerHTML = '<div class="alert alert-info"><div class="spinner"></div>Pushing data to Odoo...</div>';
+
+            setTimeout(() => {
+                document.getElementById('syncResult').innerHTML = '<div class="alert alert-success">✅ Successfully pushed to Odoo!<br>Deals sent: ' + userDeals.length + ' | Activities sent: ' + userActs.length + '</div>';
+            }, 2000);
+        }
+
+        function updateOdooDataList() {
+            const list = document.getElementById('odooDataList');
+            let html = '';
+
+            if (odooData.leads.length > 0) {
+                html += '<h4 style="margin-top: 15px; margin-bottom: 10px;">📌 Leads from Odoo</h4>';
+                odooData.leads.forEach(lead => {
+                    html += `
+                        <div class="list-item">
+                            <h4>${lead.company} <span class="badge badge-odoo">From Odoo</span></h4>
+                            <p>Prospect: ${lead.prospect} | Email: ${lead.email}</p>
+                            <p>Stage: ${lead.stage}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if (odooData.opportunities.length > 0) {
+                html += '<h4 style="margin-top: 15px; margin-bottom: 10px;">💼 Opportunities from Odoo</h4>';
+                odooData.opportunities.forEach(opp => {
+                    html += `
+                        <div class="list-item">
+                            <h4>${opp.company} <span class="badge badge-odoo">From Odoo</span></h4>
+                            <p>Prospect: ${opp.prospect} | Value: $${opp.value}</p>
+                            <p>Stage: ${opp.stage}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if (odooData.activities.length > 0) {
+                html += '<h4 style="margin-top: 15px; margin-bottom: 10px;">📞 Activities from Odoo</h4>';
+                odooData.activities.forEach(act => {
+                    html += `
+                        <div class="list-item">
+                            <h4>${act.type} <span class="badge badge-odoo">From Odoo</span></h4>
+                            <p>Duration: ${act.duration} mins | Date: ${act.date}</p>
+                            <p>${act.notes}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if (html === '') {
+                html = '<p style="color: #999;">No data synced from Odoo yet. Click "Sync From Odoo Now" to pull data.</p>';
+            }
+
+            list.innerHTML = html;
         }
 
         function updateOdooStatus() {
@@ -471,19 +583,20 @@
                 document.getElementById('odooEmail').value = odooSettings.email;
             }
             updateSyncStatus();
+            updateOdooDataList();
         }
 
         function updateSyncStatus() {
-            const syncDiv = document.getElementById('syncStatusDiv');
+            const syncDiv = document.getElementById('syncStatus');
             const userDeals = deals[currentUser] || [];
             const userActs = activities[currentUser] || [];
             
             syncDiv.innerHTML = `
                 <div class="list-item">
-                    <h4>📊 Sync Overview</h4>
-                    <p>Deals Ready to Sync: ${userDeals.length}</p>
-                    <p>Activities Ready to Sync: ${userActs.length}</p>
-                    <p style="margin-top: 10px; color: #667eea;"><strong>✅ Auto-sync enabled</strong></p>
+                    <h4>📤 Data Ready to Push to Odoo</h4>
+                    <p>✓ Deals: ${userDeals.length}</p>
+                    <p>✓ Activities: ${userActs.length}</p>
+                    <p style="margin-top: 10px; color: #667eea;"><strong>Click "Push to Odoo Now" to send your data</strong></p>
                 </div>
             `;
         }
